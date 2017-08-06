@@ -1,3 +1,5 @@
+// Package inmemory provides in-memory database implemetation with LRU caching.
+// Supported types are string, list, hash.
 package inmemory
 
 import (
