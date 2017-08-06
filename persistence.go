@@ -59,12 +59,13 @@ func (dataStore *DataStore) ToFile(path string) error {
 
 	// create file to write data to
 	backup, err := os.Create(path)
-	defer backup.Close()
 
 	if err != nil {
 		log.Println(err)
 		return err
 	}
+
+	defer backup.Close()
 
 	encCache := gob.NewEncoder(backup)
 
@@ -79,12 +80,13 @@ func (dataStore *DataStore) ToFile(path string) error {
 func (dataStore *DataStore) FromFile(path string) error {
 
 	backup, err := os.Open(path)
-	defer backup.Close()
 
 	if err != nil {
 		log.Println(err)
 		return err
 	}
+
+	defer backup.Close()
 
 	decCache := gob.NewDecoder(backup)
 	dataStore.Lock()
