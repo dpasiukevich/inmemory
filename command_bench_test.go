@@ -13,8 +13,8 @@ func BenchmarkGet(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	client.Cmd = "GET"
-	client.Args = []string{"x"}
+	client.cmd = "GET"
+	client.args = []string{"x"}
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -27,8 +27,8 @@ func BenchmarkSet(b *testing.B) {
 	b.StopTimer()
 
 	client := setupTestClient()
-	client.Cmd = "SET"
-	client.Args = []string{"x", ""}
+	client.cmd = "SET"
+	client.args = []string{"x", ""}
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -41,8 +41,8 @@ func BenchmarkLPush(b *testing.B) {
 	b.StopTimer()
 
 	client := setupTestClient()
-	client.Cmd = "LPUSH"
-	client.Args = []string{"x", ""}
+	client.cmd = "LPUSH"
+	client.args = []string{"x", ""}
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -60,8 +60,8 @@ func BenchmarkLGet(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	client.Cmd = "LGET"
-	client.Args = []string{"x", "0"}
+	client.cmd = "LGET"
+	client.args = []string{"x", "0"}
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -74,8 +74,8 @@ func BenchmarkHSet(b *testing.B) {
 	b.StopTimer()
 	client := setupTestClient()
 
-	client.Cmd = "HSET"
-	client.Args = []string{"x", "", ""}
+	client.cmd = "HSET"
+	client.args = []string{"x", "", ""}
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -93,8 +93,8 @@ func BenchmarkHGet(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	client.Cmd = "HGET"
-	client.Args = []string{"x", ""}
+	client.cmd = "HGET"
+	client.args = []string{"x", ""}
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {

@@ -56,15 +56,7 @@ var (
 	errNoKeyHash      = errors.New("no such key in the hash")
 )
 
-// DataStore struct holds all values for this database with LRU caching
-// RWMutex is required for the thread-safe data reading and modification.
-type DataStore struct {
-	sync.RWMutex
-	values map[string]*Item
-	cache  *list.List
-}
-
-// Item struc holds the actual user's item(string, list, hash).
+// Item struct holds the actual user's item(string, list, hash).
 // It has expiration in seconds, Unix time. Usually set via time.Now().Unix()
 // el is the link to the position in cache, for the O(1) cache manipulations.
 type Item struct {
@@ -73,16 +65,24 @@ type Item struct {
 	el         *list.Element
 }
 
-// Client struc holds all info about the client, the last executed command,
+// DataStore struct holds all values for this database with LRU caching
+// RWMutex is required for the thread-safe data reading and modification.
+type DataStore struct {
+	sync.RWMutex
+	values map[string]*Item
+	cache  *list.List
+}
+
+// Client struct holds all info about the client, the last executed command,
 // its output, err and arguments.
 // Each client has the connection to the specific data store. In future there
 // can be possibility to switch data stores by the client.
 type Client struct {
-	Ds    *DataStore
-	Cmd   string
-	Args  []string
-	Err   error
-	Reply string
+	ds    *DataStore
+	cmd   string
+	args  []string
+	err   error
+	reply string
 }
 
 // New creates new data store and starts workers for it. Current workers: ttld,
@@ -101,6 +101,15 @@ func New() *DataStore {
 	return &dataStore
 }
 
+// NewClient creates client for the given datastore.
+func NewClient(dataStore *DataStore) *Client {
+	return &Client{
+		ds:    dataStore,
+		cmd:   "",
+		reply: "",
+	}
+}
+
 // Exec is the command wrapper, giving the client possibility to invoke any command
 // by string name and any correct set of arguments. The result of invokation is stored
 // in the client struct. On correct usage the client's state is updated.
@@ -111,14 +120,14 @@ func (client *Client) Exec(command string, args []string) (reply string, err err
 	cmd, ok := commands[command]
 
 	if ok {
-		client.Reply = ""
-		client.Err = nil
+		client.reply = ""
+		client.err = nil
 
-		client.Cmd = command
-		client.Args = args
+		client.cmd = command
+		client.args = args
 
 		cmd(client)
-		return client.Reply, client.Err
+		return client.reply, client.err
 	}
 
 	return "", errNoSuchCommand
@@ -133,11 +142,7 @@ func (dataStore *DataStore) memoryd() {
 	threshold := uint64(float64(maxMemory) * 0.9)
 	checkInterval := time.Duration(memoryCheckInterval)
 
-	client := &Client{
-		Ds:    dataStore,
-		Cmd:   "",
-		Reply: "",
-	}
+	client := NewClient(dataStore)
 
 	for {
 		runtime.ReadMemStats(&memStats)

@@ -14,7 +14,7 @@ func TestNew(t *testing.T) {
 
 func TestTTLD(t *testing.T) {
 	client := setupTestClient()
-	go client.Ds.ttld()
+	go client.ds.ttld()
 
 	// fill data store
 	testData(client, 200)
@@ -22,13 +22,13 @@ func TestTTLD(t *testing.T) {
 	// check size
 	client.Exec("size", []string{})
 
-	if client.Reply != "200" {
+	if client.reply != "200" {
 		t.Error("Didn't create dummy data")
-		t.Errorf("Expected reply: \"200\", got: \"%s\"", client.Reply)
+		t.Errorf("Expected reply: \"200\", got: \"%s\"", client.reply)
 	}
-	if client.Err != nil {
+	if client.err != nil {
 		t.Error("Didn't create dummy data")
-		t.Errorf("Expected reply: <nil>, got: %#v", client.Err)
+		t.Errorf("Expected reply: <nil>, got: %#v", client.err)
 	}
 
 	// change TTL of only one item
@@ -39,13 +39,13 @@ func TestTTLD(t *testing.T) {
 	client.Exec("size", []string{})
 
 	// check that size decreased by one
-	if client.Reply != "199" {
+	if client.reply != "199" {
 		t.Error("Didn't remove the expired key")
-		t.Errorf("Expected reply: \"199\", got: \"%s\"", client.Reply)
+		t.Errorf("Expected reply: \"199\", got: \"%s\"", client.reply)
 	}
-	if client.Err != nil {
+	if client.err != nil {
 		t.Error("Didn't remove the expired key")
-		t.Errorf("Expected reply: <nil>, got: %#v", client.Err)
+		t.Errorf("Expected reply: <nil>, got: %#v", client.err)
 	}
 }
 
@@ -53,22 +53,22 @@ func TestExec(t *testing.T) {
 	client := setupTestClient()
 
 	// check initial client state
-	if client.Cmd != "" {
-		t.Errorf("Expected cmd: \"\", got: \"%s\"", client.Cmd)
+	if client.cmd != "" {
+		t.Errorf("Expected cmd: \"\", got: \"%s\"", client.cmd)
 	}
 
 	client.Exec("set", []string{"x", "42"})
 
 	// check client state after command execution
-	if client.Cmd != "SET" {
-		t.Errorf("Expected cmd: \"SET\", got: \"%s\"", client.Cmd)
+	if client.cmd != "SET" {
+		t.Errorf("Expected cmd: \"SET\", got: \"%s\"", client.cmd)
 	}
 
 	// check nonexistent command
 	client.Exec("WRONGCOMMAND", []string{})
 
 	// client store previous successful request state
-	if client.Cmd != "SET" {
-		t.Errorf("Expected cmd: \"SET\", got: \"%s\"", client.Cmd)
+	if client.cmd != "SET" {
+		t.Errorf("Expected cmd: \"SET\", got: \"%s\"", client.cmd)
 	}
 }

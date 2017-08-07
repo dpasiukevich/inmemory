@@ -101,9 +101,9 @@ func setupTestClient() *Client {
 	}
 
 	client := &Client{
-		Ds:    &dataStore,
-		Cmd:   "",
-		Reply: "",
+		ds:    &dataStore,
+		cmd:   "",
+		reply: "",
 	}
 
 	return client
@@ -134,10 +134,10 @@ func runner(t *testing.T, command string, client *Client) {
 		t.Run(tc.name, func(t *testing.T) {
 
 			// set the client fields, preparing to run the command
-			client.Cmd = command
-			client.Args = tc.args
-			client.Reply = ""
-			client.Err = nil
+			client.cmd = command
+			client.args = tc.args
+			client.reply = ""
+			client.err = nil
 
 			// get the actual command function by name
 			cmd, ok := commands[command]
@@ -150,13 +150,13 @@ func runner(t *testing.T, command string, client *Client) {
 			cmd(client)
 
 			// check output reply, real and expected
-			if client.Reply != tc.expectedReply {
-				t.Errorf("Expected reply: \"%s\", got: \"%s\"", tc.expectedReply, client.Reply)
+			if client.reply != tc.expectedReply {
+				t.Errorf("Expected reply: \"%s\", got: \"%s\"", tc.expectedReply, client.reply)
 			}
 
 			// check errors, real and expected
-			if client.Err != tc.expectedError {
-				t.Errorf("Expected error: %#v, got: %#v", tc.expectedError, client.Err)
+			if client.err != tc.expectedError {
+				t.Errorf("Expected error: %#v, got: %#v", tc.expectedError, client.err)
 			}
 		})
 	}
@@ -215,8 +215,8 @@ func TestKeys(t *testing.T) {
 
 	client.Exec("KEYS", []string{})
 
-	if client.Err != nil {
-		t.Errorf("Get all keys. Expected error: %#v, got: %#v", nil, client.Err)
+	if client.err != nil {
+		t.Errorf("Get all keys. Expected error: %#v, got: %#v", nil, client.err)
 	}
 }
 

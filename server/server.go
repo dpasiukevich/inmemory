@@ -19,11 +19,7 @@ func handleConnection(conn net.Conn, dataStore *inmemory.DataStore) {
 	defer conn.Close()
 
 	// initialize client for the data store
-	client := &inmemory.Client{
-		Ds:    dataStore,
-		Cmd:   "",
-		Reply: "",
-	}
+	client := inmemory.NewClient(dataStore)
 
 	log.Println("Client connected from:", conn.RemoteAddr())
 

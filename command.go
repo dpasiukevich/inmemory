@@ -42,21 +42,21 @@ func (dataStore *DataStore) remove(key string) error {
 // Arguments are read from Args field of client object.
 func Get(client *Client) {
 
-	dataStore := client.Ds
+	dataStore := client.ds
 
-	if len(client.Args) != 1 {
-		client.Err = errArgumentNumber
+	if len(client.args) != 1 {
+		client.err = errArgumentNumber
 		return
 	}
 
-	key := client.Args[0]
+	key := client.args[0]
 
 	dataStore.Lock()
 	defer dataStore.Unlock()
 
 	item, ok := dataStore.get(key)
 	if !ok {
-		client.Err = errNoItem
+		client.err = errNoItem
 		return
 	}
 
@@ -64,12 +64,12 @@ func Get(client *Client) {
 	result, ok := item.Value.(string)
 
 	if !ok {
-		client.Err = errNotString
+		client.err = errNotString
 		return
 
 	}
 
-	client.Reply = result
+	client.reply = result
 
 	// updating cache to set the current item as the most recently used
 	dataStore.cache.MoveToFront(item.el)
@@ -80,30 +80,30 @@ func Get(client *Client) {
 // Arguments are read from Args field of client object.
 func Set(client *Client) {
 
-	dataStore := client.Ds
+	dataStore := client.ds
 
-	if len(client.Args) < 2 || len(client.Args) > 3 {
-		client.Err = errArgumentNumber
+	if len(client.args) < 2 || len(client.args) > 3 {
+		client.err = errArgumentNumber
 		return
 	}
 
-	key := client.Args[0]
-	value := client.Args[1]
+	key := client.args[0]
+	value := client.args[1]
 
 	// expire is the time to live in seconds
 	var expire int64
 
 	// if ttl is set by user
-	if len(client.Args) == 3 {
+	if len(client.args) == 3 {
 
 		// parse ttl and check it for correctness
-		expire, err := strconv.ParseInt(client.Args[2], 10, 64)
+		expire, err := strconv.ParseInt(client.args[2], 10, 64)
 		if err != nil {
-			client.Err = errTTLFormat
+			client.err = errTTLFormat
 			return
 		}
 		if expire < 0 {
-			client.Err = errTTLValue
+			client.err = errTTLValue
 			return
 		}
 	} else {
@@ -130,36 +130,36 @@ func Set(client *Client) {
 	el := dataStore.cache.PushFront(key)
 	item.el = el
 
-	client.Reply = "OK"
+	client.reply = "OK"
 }
 
 // Size command return number of all keys in the data store.
 func Size(client *Client) {
 
-	if len(client.Args) != 0 {
-		client.Err = errArgumentNumber
+	if len(client.args) != 0 {
+		client.err = errArgumentNumber
 		return
 	}
 
-	dataStore := client.Ds
+	dataStore := client.ds
 
 	dataStore.RLock()
 	defer dataStore.RUnlock()
 
 	// convert int number of values to the string
-	client.Reply = strconv.Itoa(len(dataStore.values))
+	client.reply = strconv.Itoa(len(dataStore.values))
 }
 
 // Remove element from the data store by given key.
 func Remove(client *Client) {
 
-	if len(client.Args) != 1 {
-		client.Err = errArgumentNumber
+	if len(client.args) != 1 {
+		client.err = errArgumentNumber
 		return
 	}
 
-	dataStore := client.Ds
-	key := client.Args[0]
+	dataStore := client.ds
+	key := client.args[0]
 
 	dataStore.Lock()
 	defer dataStore.Unlock()
@@ -167,9 +167,9 @@ func Remove(client *Client) {
 	err := dataStore.remove(key)
 
 	if err == nil {
-		client.Reply = "OK"
+		client.reply = "OK"
 	} else {
-		client.Err = err
+		client.err = err
 	}
 }
 
@@ -177,12 +177,12 @@ func Remove(client *Client) {
 // Result of the command is the string, containing all the keys.
 func Keys(client *Client) {
 
-	if len(client.Args) != 0 {
-		client.Err = errArgumentNumber
+	if len(client.args) != 0 {
+		client.err = errArgumentNumber
 		return
 	}
 
-	dataStore := client.Ds
+	dataStore := client.ds
 
 	dataStore.RLock()
 	defer dataStore.RUnlock()
@@ -198,32 +198,32 @@ func Keys(client *Client) {
 	}
 
 	// convert list of strings to the one string
-	client.Reply = fmt.Sprint(res)
+	client.reply = fmt.Sprint(res)
 }
 
 // TTL updates ttl value of the item.
 func TTL(client *Client) {
 
-	if len(client.Args) != 2 {
-		client.Err = errArgumentNumber
+	if len(client.args) != 2 {
+		client.err = errArgumentNumber
 		return
 	}
 
-	key := client.Args[0]
+	key := client.args[0]
 
 	// parse expiration time and check it for correctness
-	expire, err := strconv.ParseInt(client.Args[1], 10, 64)
+	expire, err := strconv.ParseInt(client.args[1], 10, 64)
 	if err != nil {
-		client.Err = errTTLFormat
+		client.err = errTTLFormat
 		return
 	}
 
 	if expire < 0 {
-		client.Err = errTTLValue
+		client.err = errTTLValue
 		return
 	}
 
-	dataStore := client.Ds
+	dataStore := client.ds
 
 	dataStore.Lock()
 	defer dataStore.Unlock()
@@ -231,13 +231,13 @@ func TTL(client *Client) {
 	item, ok := dataStore.get(key)
 
 	if !ok {
-		client.Err = errNoItem
+		client.err = errNoItem
 		return
 	}
 
 	// set the expiration time
 	item.Expiration = time.Now().Unix() + expire
-	client.Reply = "OK"
+	client.reply = "OK"
 }
 
 // LSet updates item in the list object.
@@ -247,41 +247,41 @@ func TTL(client *Client) {
 // List item will be updated as the most recently used in the cache.
 func LSet(client *Client) {
 
-	if len(client.Args) != 3 {
-		client.Err = errArgumentNumber
+	if len(client.args) != 3 {
+		client.err = errArgumentNumber
 		return
 	}
 
-	key := client.Args[0]
+	key := client.args[0]
 
 	// get the index of the list and check it for correctness
-	index, err := strconv.Atoi(client.Args[1])
+	index, err := strconv.Atoi(client.args[1])
 	if err != nil {
-		client.Err = errIndexFormat
+		client.err = errIndexFormat
 		return
 	}
 
-	value := client.Args[2]
+	value := client.args[2]
 
-	dataStore := client.Ds
+	dataStore := client.ds
 
 	dataStore.Lock()
 	defer dataStore.Unlock()
 
 	item, ok := dataStore.get(key)
 	if !ok {
-		client.Err = errNoItem
+		client.err = errNoItem
 		return
 	}
 
 	// convert the item to the list type
 	list, ok := item.Value.([]string)
 	if !ok {
-		client.Err = errNotList
+		client.err = errNotList
 		return
 	}
 	if index >= len(list) || index < 0 {
-		client.Err = errIndexRange
+		client.err = errIndexRange
 		return
 	}
 
@@ -290,7 +290,7 @@ func LSet(client *Client) {
 	// update the cache
 	dataStore.cache.MoveToFront(item.el)
 
-	client.Reply = "OK"
+	client.reply = "OK"
 }
 
 // LPush is used to push value in the list.
@@ -298,15 +298,15 @@ func LSet(client *Client) {
 // Arguments are read from Args field of client object.
 // List item will be updated as the most recently used in the cache.
 func LPush(client *Client) {
-	if len(client.Args) != 2 {
-		client.Err = errArgumentNumber
+	if len(client.args) != 2 {
+		client.err = errArgumentNumber
 		return
 	}
 
-	key := client.Args[0]
-	value := client.Args[1]
+	key := client.args[0]
+	value := client.args[1]
 
-	dataStore := client.Ds
+	dataStore := client.ds
 
 	dataStore.Lock()
 	defer dataStore.Unlock()
@@ -324,14 +324,14 @@ func LPush(client *Client) {
 		el := dataStore.cache.PushFront(key)
 		newItem.el = el
 
-		client.Reply = "OK"
+		client.reply = "OK"
 		return
 	}
 
 	// convert existing item to the list type
 	list, ok := item.Value.([]string)
 	if !ok {
-		client.Err = errNotList
+		client.err = errNotList
 		return
 	}
 	item.Value = append(list, value)
@@ -339,7 +339,7 @@ func LPush(client *Client) {
 	// update the cache
 	dataStore.cache.MoveToFront(item.el)
 
-	client.Reply = "OK"
+	client.reply = "OK"
 }
 
 // LGet returns value from the list item by given key.
@@ -348,43 +348,43 @@ func LPush(client *Client) {
 // Otherwise client's Reply field is empty string, and error in the client.Err field.
 func LGet(client *Client) {
 
-	if len(client.Args) != 2 {
-		client.Err = errArgumentNumber
+	if len(client.args) != 2 {
+		client.err = errArgumentNumber
 		return
 	}
 
-	key := client.Args[0]
-	index, err := strconv.Atoi(client.Args[1])
+	key := client.args[0]
+	index, err := strconv.Atoi(client.args[1])
 	if err != nil {
-		client.Err = errIndexFormat
+		client.err = errIndexFormat
 		return
 	}
 
-	dataStore := client.Ds
+	dataStore := client.ds
 
 	dataStore.Lock()
 	defer dataStore.Unlock()
 
 	item, ok := dataStore.get(key)
 	if !ok {
-		client.Err = errNoItem
+		client.err = errNoItem
 		return
 	}
 
 	// convert existing item to the list type
 	list, ok := item.Value.([]string)
 	if !ok {
-		client.Err = errNotList
+		client.err = errNotList
 		return
 	}
 	if index >= len(list) || index < 0 {
-		client.Err = errIndexRange
+		client.err = errIndexRange
 		return
 	}
 
 	// update the cache
 	dataStore.cache.MoveToFront(item.el)
-	client.Reply = list[index]
+	client.reply = list[index]
 }
 
 // HSet updates or creates the value in the hash item in the data store.
@@ -393,16 +393,16 @@ func LGet(client *Client) {
 // Hash item will be updated as the most recently used in the cache.
 func HSet(client *Client) {
 
-	if len(client.Args) != 3 {
-		client.Err = errArgumentNumber
+	if len(client.args) != 3 {
+		client.err = errArgumentNumber
 		return
 	}
 
-	key := client.Args[0]
-	hashKey := client.Args[1]
-	value := client.Args[2]
+	key := client.args[0]
+	hashKey := client.args[1]
+	value := client.args[2]
 
-	dataStore := client.Ds
+	dataStore := client.ds
 
 	dataStore.Lock()
 	defer dataStore.Unlock()
@@ -425,21 +425,21 @@ func HSet(client *Client) {
 		// add new hash to the cache
 		el := dataStore.cache.PushFront(key)
 		newItem.el = el
-		client.Reply = "OK"
+		client.reply = "OK"
 		return
 	}
 
 	// convert existing item to the map type
 	hash, ok := item.Value.(map[string]string)
 	if !ok {
-		client.Err = errNotHash
+		client.err = errNotHash
 		return
 	}
 
 	hash[hashKey] = value
 	dataStore.cache.MoveToFront(item.el)
 
-	client.Reply = "OK"
+	client.reply = "OK"
 }
 
 // HGet retrieves value from hash by given key.
@@ -448,15 +448,15 @@ func HSet(client *Client) {
 // Hash item will be updated as the most recently used in the cache.
 func HGet(client *Client) {
 
-	if len(client.Args) != 2 {
-		client.Err = errArgumentNumber
+	if len(client.args) != 2 {
+		client.err = errArgumentNumber
 		return
 	}
 
-	key := client.Args[0]
-	hashKey := client.Args[1]
+	key := client.args[0]
+	hashKey := client.args[1]
 
-	dataStore := client.Ds
+	dataStore := client.ds
 
 	dataStore.Lock()
 	defer dataStore.Unlock()
@@ -464,23 +464,23 @@ func HGet(client *Client) {
 	item, ok := dataStore.get(key)
 
 	if !ok {
-		client.Err = errNoItem
+		client.err = errNoItem
 		return
 	}
 
 	// convert existing item to the hash type
 	hash, ok := item.Value.(map[string]string)
 	if !ok {
-		client.Err = errNotHash
+		client.err = errNotHash
 		return
 	}
 	result, ok := hash[hashKey]
 	if !ok {
-		client.Err = errNoKeyHash
+		client.err = errNoKeyHash
 		return
 	}
 
 	// update the cache
 	dataStore.cache.MoveToFront(item.el)
-	client.Reply = result
+	client.reply = result
 }
