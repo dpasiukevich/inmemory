@@ -2,7 +2,7 @@ Inmemory database
 =======================
 
 [![Go Doc](https://godoc.org/github.com/pasiukevich/inmemory?status.svg)](https://godoc.org/github.com/pasiukevich/inmemory)
-[![Go Report Card](https://goreportcard.com/report/github.com/pasiukevich/inmemory)](https://goreportcard.com/report/github.com/pasiukevich/inmemory)
+[![Go Report Card](https://goreportcard.com/badge/github.com/pasiukevich/inmemory)](https://goreportcard.com/report/github.com/pasiukevich/inmemory)
 
 About
 -----
@@ -29,7 +29,27 @@ Usage
 -----
 
 1. run server/server.go
-2. run client/client.go to connect
+2. run client/client.go
+
+Server options: 
+```
+  -addr string
+    	Address to listen. (default "127.0.0.1:9443")
+  -backup string
+    	Path to file with backup in gob format. Used to restore previous state of server.
+  -cert string
+    	Server certificate filepath. (default "server.crt")
+  -key string
+    	Server key filepath. (default "server.key")
+```
+
+Client options:
+
+```
+  -addr string
+    	Address to listen/connect. (default "127.0.0.1:9443")
+```
+
 
 Available commands:
 - set key value

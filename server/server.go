@@ -62,7 +62,7 @@ func handleConnection(conn net.Conn, dataStore *inmemory.DataStore) {
 
 func main() {
 	addrPtr := flag.String("addr", "127.0.0.1:9443", "Address to listen.")
-	backupPtr := flag.String("backup", "", "Path to file with stored info in gob format.")
+	backupPtr := flag.String("backup", "", "Path to file with backup in gob format. Used to restore previous state of server.")
 	certPtr := flag.String("cert", "server.crt", "Server certificate filepath.")
 	keyPtr := flag.String("key", "server.key", "Server key filepath.")
 
