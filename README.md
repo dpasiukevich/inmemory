@@ -1,6 +1,9 @@
 Inmemory database
 =======================
 
+[![Go Doc](https://godoc.org/github.com/pasiukevich/inmemory?status.svg)](https://godoc.org/github.com/pasiukevich/inmemory)
+[![Go Report Card](https://goreportcard.com/report/github.com/pasiukevich/inmemory)](https://goreportcard.com/report/github.com/pasiukevich/inmemory)
+
 About
 -----
 
@@ -8,7 +11,7 @@ The in-memory database with caching, written in Golang.
 
 Install
 -------
-`go get github.com/dpasiukevich/inmemory`
+`go get github.com/pasiukevich/inmemory`
 
 To run in the container, clone this repo and run:
 
