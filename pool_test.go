@@ -98,54 +98,46 @@ func TestPoolGet(t *testing.T) {
 func TestPoolReturn(t *testing.T) {
 
 	serverAddr := "127.0.0.1:40000"
+
 	ln, err := net.Listen("tcp", serverAddr)
 
 	if err != nil {
 		t.Fatalf("Expected to start tcp server listener, got error: %#v", err)
 	}
 
-	done := make(chan struct{})
-	defer close(done)
-
 	go func() {
-		for {
-			select {
-			case <-done:
-				ln.Close()
-				return
-			default:
-				_, err = ln.Accept()
-				if err != nil {
-					t.Errorf("Expected to receive connection, got error: %#v", err)
-				}
-			}
+		pool := NewPool(1, newConnection, &Server{serverAddr, 50})
+
+		conn, ok := pool.Get(serverAddr)
+
+		if !ok {
+			t.Errorf("Expected to have a connection to %s in connection pool", serverAddr)
+		}
+		pool.Return(serverAddr, conn)
+
+		value := []byte{}
+
+		// try to return more connections than the limit is
+		conn, err := net.Dial("tcp", serverAddr)
+		pool.Return(serverAddr, conn)
+
+		_, err = conn.Read(value)
+		if err == nil {
+			t.Error("Expected to have an error for read from connection")
+		}
+
+		// return connection to non-existing server
+		conn, err = net.Dial("tcp", serverAddr)
+		ok = pool.Return(serverAddr+"0", conn)
+		if ok {
+			t.Error("Expected to have an error for returning connection to non-existent server")
 		}
 	}()
 
-	pool := NewPool(1, newConnection, &Server{serverAddr, 50})
-
-	conn, ok := pool.Get(serverAddr)
-
-	if !ok {
-		t.Errorf("Expected to have a connection to %s in connection pool", serverAddr)
-	}
-	pool.Return(serverAddr, conn)
-
-	value := []byte{}
-
-	// try to return more connections than the limit is
-	conn, err = net.Dial("tcp", serverAddr)
-	pool.Return(serverAddr, conn)
-
-	_, err = conn.Read(value)
-	if err == nil {
-		t.Error("Expected to have an error for read from connection")
-	}
-
-	// return connection to non-existing server
-	conn, err = net.Dial("tcp", serverAddr)
-	ok = pool.Return(serverAddr+"0", conn)
-	if ok {
-		t.Error("Expected to have an error for returning connection to non-existent server")
+	for i := 0; i < 2; i++ {
+		_, err = ln.Accept()
+		if err != nil {
+			t.Errorf("Expected to receive connection, got error: %#v", err)
+		}
 	}
 }

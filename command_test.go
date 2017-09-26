@@ -1,6 +1,8 @@
 package inmemory
 
 import (
+	"io/ioutil"
+	"log"
 	"strconv"
 	"testing"
 )
@@ -228,6 +230,7 @@ func TestTTL(t *testing.T) {
 
 	runner(t, "TTL", client)
 
+	log.SetOutput(ioutil.Discard)
 	// should handle wrong ttl command
 	client.ds.ttlCommands <- expiration{"WRONG COMMAND", "KEY", 15}
 }
