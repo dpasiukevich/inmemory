@@ -58,6 +58,7 @@ var (
 		},
 		"LSET": {
 			{"correct usage", []string{"list", "2", "10"}, "OK", nil},
+			{"wrong arguments number", []string{"list", "2"}, "", errArgumentNumber},
 			{"wrong index format", []string{"list", "index", "10"}, "", errIndexFormat},
 			{"index out of range", []string{"list", "10", "10"}, "", errIndexRange},
 			{"set not to list", []string{"x", "0", "0"}, "", errNotList},
@@ -82,10 +83,13 @@ var (
 		},
 		"HSET": {
 			{"correct usage", []string{"hash", "x", "value"}, "OK", nil},
+			{"wrong arguments number", []string{"hash", "key"}, "", errArgumentNumber},
+			{"insert in the same map", []string{"hash", "y", "value"}, "OK", nil},
 			{"set on existing object", []string{"x", "key", "value"}, "", errNotHash},
 		},
 		"HGET": {
 			{"correct usage", []string{"hash", "key"}, "value", nil},
+			{"wrong arguments number", []string{"hash", "key", "value"}, "", errArgumentNumber},
 			{"get from not hash", []string{"x", "key"}, "", errNotHash},
 			{"get nonexistent item", []string{"hash", "key1"}, "", errNoKeyHash},
 			{"get from nonexistent hash", []string{"hash1", "key"}, "", errNoItem},
@@ -223,6 +227,9 @@ func TestTTL(t *testing.T) {
 	testData(client, 4)
 
 	runner(t, "TTL", client)
+
+	// should handle wrong ttl command
+	client.ds.ttlCommands <- expiration{"WRONG COMMAND", "KEY", 15}
 }
 
 func TestLSet(t *testing.T) {
@@ -234,6 +241,11 @@ func TestLSet(t *testing.T) {
 	client.Exec("SET", []string{"x", "5"})
 
 	runner(t, "LSET", client)
+
+	client.Exec("LSET", []string{"doesntexist", "0", "14"})
+	if client.err != errNoItem {
+		t.Errorf("Set key non-existant list should give %#v, got: %#v", errNoItem, client.err)
+	}
 }
 
 func TestLPush(t *testing.T) {

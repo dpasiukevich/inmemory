@@ -1,8 +1,8 @@
 package inmemory
 
 import (
-	"fmt"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -214,7 +214,7 @@ func Keys(client *Client) {
 	}
 
 	// convert list of strings to the one string
-	client.reply = fmt.Sprint(res)
+	client.reply = strings.Join(res, " ")
 }
 
 // TTL updates ttl value of the item.
