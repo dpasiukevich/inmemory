@@ -5,6 +5,7 @@ package inmemory
 import (
 	"container/list"
 	"errors"
+	"log"
 	"runtime"
 	"strings"
 	"sync"
@@ -14,17 +15,18 @@ import (
 var (
 	// command table
 	commands = map[string](func(*Client)){
-		"SET":    Set,
-		"GET":    Get,
-		"SIZE":   Size,
-		"REMOVE": Remove,
-		"KEYS":   Keys,
-		"TTL":    TTL,
-		"LSET":   LSet,
-		"LPUSH":  LPush,
-		"LGET":   LGet,
-		"HSET":   HSet,
-		"HGET":   HGet,
+		"SET":          Set,
+		"GET":          Get,
+		"SIZE":         Size,
+		"REMOVE":       Remove,
+		"REMOVE_BATCH": RemoveBatch,
+		"KEYS":         Keys,
+		"TTL":          TTL,
+		"LSET":         LSet,
+		"LPUSH":        LPush,
+		"LGET":         LGet,
+		"HSET":         HSet,
+		"HGET":         HGet,
 	}
 
 	// default server configuration
@@ -60,17 +62,23 @@ var (
 // It has expiration in seconds, Unix time. Usually set via time.Now().Unix()
 // el is the link to the position in cache, for the O(1) cache manipulations.
 type Item struct {
-	Value      interface{}
-	Expiration int64
-	el         *list.Element
+	Value interface{}
+	el    *list.Element
+}
+
+type Expiration struct {
+	Command string
+	Key     string
+	Time    int64
 }
 
 // DataStore struct holds all values for this database with LRU caching
 // RWMutex is required for the thread-safe data reading and modification.
 type DataStore struct {
 	sync.RWMutex
-	values map[string]*Item
-	cache  *list.List
+	values      map[string]*Item
+	cache       *list.List
+	ttlCommands chan Expiration
 }
 
 // Client struct holds all info about the client, the last executed command,
@@ -90,8 +98,9 @@ type Client struct {
 func New() *DataStore {
 
 	dataStore := DataStore{
-		values: make(map[string]*Item),
-		cache:  list.New(),
+		values:      make(map[string]*Item),
+		cache:       list.New(),
+		ttlCommands: make(chan Expiration, 15),
 	}
 
 	go dataStore.ttld()
@@ -150,15 +159,21 @@ func (dataStore *DataStore) memoryd() {
 		// naive solution
 		// remove 20 least recently used elements from memory
 		if memStats.Alloc > threshold {
+			unusedEntries := make([]string, 0)
 			dataStore.Lock()
 			for i := 0; i < 20; i++ {
 				elPtr := dataStore.cache.Back()
 				if elPtr != nil {
 					key := elPtr.Value.(string)
-					client.Exec("remove", []string{key})
+					unusedEntries = append(unusedEntries, key)
 				}
 			}
 			dataStore.Unlock()
+
+			// remove unused entries
+			if len(unusedEntries) > 0 {
+				client.Exec("REMOVE_BATCH", unusedEntries)
+			}
 		}
 
 		time.Sleep(checkInterval * time.Second)
@@ -168,19 +183,36 @@ func (dataStore *DataStore) memoryd() {
 // ttld is a worker clearing items with exceeded ttl.
 func (dataStore *DataStore) ttld() {
 
-	// add listening on the channel for shutdown
+	ticker := time.NewTicker(cleanupInterval)
+	expirations := make(map[string]int64)
+	client := NewClient(dataStore)
+
 	for {
-		time.Sleep(cleanupInterval)
+		select {
+		// catch all ttl related commands to keep data consistent
+		case expiration := <-dataStore.ttlCommands:
+			switch expiration.Command {
+			case "DELETE":
+				delete(expirations, expiration.Key)
+			case "SET":
+				expirations[expiration.Key] = expiration.Time
+			default:
+				log.Println("ttld: cannot process command", expiration.Command)
+			}
+		// initialize cleanup for entries
+		case <-ticker.C:
+			var expired []string
+			currentTime := time.Now().Unix()
+			for k, v := range expirations {
+				if v < currentTime {
+					expired = append(expired, k)
+				}
+			}
 
-		current := time.Now().Unix()
-
-		dataStore.Lock()
-		for key, item := range dataStore.values {
-			if current-item.Expiration > 0 {
-				dataStore.remove(key)
+			// delete expired entries from the data store
+			if len(expired) > 0 {
+				client.Exec("REMOVE_BATCH", expired)
 			}
 		}
-
-		dataStore.Unlock()
 	}
 }

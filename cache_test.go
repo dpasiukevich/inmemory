@@ -14,7 +14,6 @@ func TestNew(t *testing.T) {
 
 func TestTTLD(t *testing.T) {
 	client := setupTestClient()
-	go client.ds.ttld()
 
 	// fill data store
 	testData(client, 200)
@@ -34,7 +33,7 @@ func TestTTLD(t *testing.T) {
 	// change TTL of only one item
 	client.Exec("TTL", []string{"key50", "4"})
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(7 * time.Second)
 
 	client.Exec("size", []string{})
 

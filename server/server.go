@@ -9,7 +9,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/dpasiukevich/inmemory"
+	"github.com/pasiukevich/inmemory"
 )
 
 func handleConnection(conn net.Conn, dataStore *inmemory.DataStore) {
@@ -51,7 +51,6 @@ func handleConnection(conn net.Conn, dataStore *inmemory.DataStore) {
 			} else {
 				rw.WriteString(err.Error())
 			}
-
 			rw.WriteString("\n")
 
 			// send the reply

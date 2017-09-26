@@ -23,13 +23,11 @@ func (dataStore *DataStore) persistenced() {
 	for {
 		time.Sleep(backupInterval)
 
-		timestamp := time.Now().Format("20060102150405")
-
 		// Store all the data in the file
-		err := dataStore.ToFile(backupsDir + "/cache_data" + timestamp + ".gob")
+		err := dataStore.ToFile(backupsDir)
 		// log the result of saving the data
 		if err == nil {
-			log.Println("Backup created", timestamp)
+			log.Println("Backup created")
 		} else {
 			log.Println("Error creating backup", err)
 		}
@@ -57,6 +55,9 @@ func (dataStore *DataStore) persistenced() {
 // Only the data is stored, the caching order is omitted
 func (dataStore *DataStore) ToFile(path string) error {
 
+	timestamp := time.Now().Format("20060102150405")
+
+	path += "/cache_data" + timestamp + ".gob"
 	// create file to write data to
 	backup, err := os.Create(path)
 

@@ -116,9 +116,9 @@ func Set(client *Client) {
 	}
 
 	item := &Item{
-		Value:      value,
-		Expiration: expire,
-		el:         nil,
+		Value: value,
+		//Expiration: expire,
+		el: nil,
 	}
 
 	dataStore.Lock()
@@ -173,6 +173,19 @@ func Remove(client *Client) {
 	}
 }
 
+func RemoveBatch(client *Client) {
+	dataStore := client.ds
+
+	dataStore.Lock()
+	defer dataStore.Unlock()
+
+	for _, key := range client.args {
+		dataStore.remove(key)
+	}
+
+	client.reply = "OK"
+}
+
 // Keys which are currently in the data store.
 // Result of the command is the string, containing all the keys.
 func Keys(client *Client) {
@@ -225,18 +238,10 @@ func TTL(client *Client) {
 
 	dataStore := client.ds
 
-	dataStore.Lock()
-	defer dataStore.Unlock()
-
-	item, ok := dataStore.get(key)
-
-	if !ok {
-		client.err = errNoItem
-		return
-	}
+	dataStore.ttlCommands <- Expiration{"SET", key, time.Now().Unix() + expire}
 
 	// set the expiration time
-	item.Expiration = time.Now().Unix() + expire
+	//item.Expiration = time.Now().Unix() + expire
 	client.reply = "OK"
 }
 
@@ -316,9 +321,9 @@ func LPush(client *Client) {
 	// create new list, if there is none
 	if !ok {
 		newItem := &Item{
-			Value:      []string{value},
-			Expiration: time.Now().Unix() + defaultExpiration,
-			el:         nil,
+			Value: []string{value},
+			//Expiration: time.Now().Unix() + defaultExpiration,
+			el: nil,
 		}
 		dataStore.set(key, newItem)
 		el := dataStore.cache.PushFront(key)
@@ -415,8 +420,8 @@ func HSet(client *Client) {
 			Value: map[string]string{
 				hashKey: value,
 			},
-			Expiration: time.Now().Unix() + defaultExpiration,
-			el:         nil,
+			//Expiration: time.Now().Unix() + defaultExpiration,
+			el: nil,
 		}
 
 		// set the value to new hash

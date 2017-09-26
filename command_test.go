@@ -1,7 +1,6 @@
 package inmemory
 
 import (
-	"container/list"
 	"strconv"
 	"testing"
 )
@@ -44,17 +43,18 @@ var (
 			{"correct usage", []string{"key2"}, "OK", nil},
 			{"delete same key again", []string{"key2"}, "", errNoItem},
 			{"0 arguments", []string{}, "", errArgumentNumber},
-			{"2 arguments", []string{}, "", errArgumentNumber},
+			{"2 arguments", []string{"x", "y"}, "", errArgumentNumber},
 		},
 		"KEYS": {
 			{"1 argument", []string{"x"}, "", errArgumentNumber},
 		},
 		"TTL": {
 			{"correct usage", []string{"key0", "25"}, "OK", nil},
-			{"set TTL on missing key", []string{"x", "25"}, "", errNoItem},
+			{"set TTL on missing key", []string{"x", "25"}, "OK", nil},
 			{"0 arguments", []string{}, "", errArgumentNumber},
-			{"1 argument", []string{}, "", errArgumentNumber},
-			{"2 arguments", []string{}, "", errArgumentNumber},
+			{"1 argument", []string{"x"}, "", errArgumentNumber},
+			{"ttl not a number", []string{"x", "y"}, "", errTTLFormat},
+			{"ttl is less than 0", []string{"x", "-1"}, "", errTTLValue},
 		},
 		"LSET": {
 			{"correct usage", []string{"list", "2", "10"}, "OK", nil},
@@ -95,13 +95,10 @@ var (
 
 // setup new data store and create client object for it
 func setupTestClient() *Client {
-	dataStore := DataStore{
-		values: make(map[string]*Item),
-		cache:  list.New(),
-	}
+	dataStore := New()
 
 	client := &Client{
-		ds:    &dataStore,
+		ds:    dataStore,
 		cmd:   "",
 		reply: "",
 	}
