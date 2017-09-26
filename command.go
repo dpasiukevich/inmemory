@@ -117,14 +117,14 @@ func Set(client *Client) {
 
 	item := &Item{
 		Value: value,
-		//Expiration: expire,
-		el: nil,
+		el:    nil,
 	}
 
 	dataStore.Lock()
 	defer dataStore.Unlock()
 
 	dataStore.set(key, item)
+	dataStore.ttlCommands <- expiration{"SET", key, expire}
 
 	// update the cache
 	el := dataStore.cache.PushFront(key)
@@ -164,6 +164,7 @@ func Remove(client *Client) {
 	dataStore.Lock()
 	defer dataStore.Unlock()
 
+	dataStore.ttlCommands <- expiration{"DELETE", key, 0}
 	err := dataStore.remove(key)
 
 	if err == nil {
@@ -173,6 +174,7 @@ func Remove(client *Client) {
 	}
 }
 
+// RemoveBatch of keys from the datastore.
 func RemoveBatch(client *Client) {
 	dataStore := client.ds
 
@@ -180,6 +182,7 @@ func RemoveBatch(client *Client) {
 	defer dataStore.Unlock()
 
 	for _, key := range client.args {
+		dataStore.ttlCommands <- expiration{"DELETE", key, 0}
 		dataStore.remove(key)
 	}
 
@@ -238,7 +241,7 @@ func TTL(client *Client) {
 
 	dataStore := client.ds
 
-	dataStore.ttlCommands <- Expiration{"SET", key, time.Now().Unix() + expire}
+	dataStore.ttlCommands <- expiration{"SET", key, time.Now().Unix() + expire}
 
 	// set the expiration time
 	//item.Expiration = time.Now().Unix() + expire

@@ -20,8 +20,8 @@ func TestNewPool(t *testing.T) {
 	pool := NewPool(10, newConnection, &Server{"server1", 50}, &Server{"server2", 50})
 
 	servers := map[string]struct{}{
-		"server1": struct{}{},
-		"server2": struct{}{},
+		"server1": {},
+		"server2": {},
 	}
 
 	for server := range servers {

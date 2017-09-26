@@ -66,19 +66,13 @@ type Item struct {
 	el    *list.Element
 }
 
-type Expiration struct {
-	Command string
-	Key     string
-	Time    int64
-}
-
 // DataStore struct holds all values for this database with LRU caching
 // RWMutex is required for the thread-safe data reading and modification.
 type DataStore struct {
 	sync.RWMutex
 	values      map[string]*Item
 	cache       *list.List
-	ttlCommands chan Expiration
+	ttlCommands chan expiration
 }
 
 // Client struct holds all info about the client, the last executed command,
@@ -93,6 +87,12 @@ type Client struct {
 	reply string
 }
 
+type expiration struct {
+	command string
+	key     string
+	time    int64
+}
+
 // New creates new data store and starts workers for it. Current workers: ttld,
 // persistenced and memoryd.
 func New() *DataStore {
@@ -100,7 +100,7 @@ func New() *DataStore {
 	dataStore := DataStore{
 		values:      make(map[string]*Item),
 		cache:       list.New(),
-		ttlCommands: make(chan Expiration, 15),
+		ttlCommands: make(chan expiration, 15),
 	}
 
 	go dataStore.ttld()
@@ -191,13 +191,13 @@ func (dataStore *DataStore) ttld() {
 		select {
 		// catch all ttl related commands to keep data consistent
 		case expiration := <-dataStore.ttlCommands:
-			switch expiration.Command {
+			switch expiration.command {
 			case "DELETE":
-				delete(expirations, expiration.Key)
+				delete(expirations, expiration.key)
 			case "SET":
-				expirations[expiration.Key] = expiration.Time
+				expirations[expiration.key] = expiration.time
 			default:
-				log.Println("ttld: cannot process command", expiration.Command)
+				log.Println("ttld: cannot process command", expiration.command)
 			}
 		// initialize cleanup for entries
 		case <-ticker.C:
