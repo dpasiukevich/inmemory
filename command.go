@@ -239,9 +239,13 @@ func TTL(client *Client) {
 		return
 	}
 
+	if expire != 0 {
+		expire += time.Now().Unix()
+	}
+
 	dataStore := client.ds
 
-	dataStore.ttlCommands <- expiration{"SET", key, time.Now().Unix() + expire}
+	dataStore.ttlCommands <- expiration{"SET", key, expire}
 
 	// set the expiration time
 	//item.Expiration = time.Now().Unix() + expire

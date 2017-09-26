@@ -204,7 +204,7 @@ func (dataStore *DataStore) ttld() {
 			var expired []string
 			currentTime := time.Now().Unix()
 			for k, v := range expirations {
-				if v < currentTime {
+				if v < currentTime && v != 0 {
 					expired = append(expired, k)
 				}
 			}
