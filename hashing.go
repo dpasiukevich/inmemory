@@ -92,7 +92,7 @@ func (c *Circle) Get(key string) *Server {
 	c.RLock()
 	defer c.RUnlock()
 
-	// search for the virtualnode, assosiated with the key
+	// search for the virtualnode, associated with the key
 	i := c.search(key)
 	if i >= len(c.nodes) {
 		i = 0
@@ -101,7 +101,7 @@ func (c *Circle) Get(key string) *Server {
 }
 
 // adding server to the circle. Each server has number of vnodes represented as hashes
-// to generate several hashes from server addres, append byte for each iteration
+// to generate several hashes from server address, append byte for each iteration
 func (c *Circle) add(server *Server) {
 	if _, ok := c.servers[server]; !ok {
 		c.servers[server] = struct{}{}
@@ -129,7 +129,7 @@ func (c *Circle) remove(s *Server) {
 		return
 	}
 
-	// delete vnodes assosiated with the server
+	// delete vnodes associated with the server
 	for nodeIndex, nodeHash := range c.nodes {
 		if server := c.node2server[nodeHash]; *server == *s {
 			delete(c.node2server, nodeHash)
