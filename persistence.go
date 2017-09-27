@@ -20,6 +20,9 @@ func (dataStore *DataStore) persistenced() {
 		os.Mkdir(backupsDir, 0755)
 	}
 
+	// register the structures for correct encoding for the backup
+	gob.Register(map[string]string{})
+
 	for {
 		time.Sleep(backupInterval)
 

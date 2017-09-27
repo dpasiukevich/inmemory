@@ -13,6 +13,8 @@ type Server struct {
 	Weight int    `json:"weight"`
 }
 
+// node and nodes represent virtual node for the server
+// it allows better keys distribution in the circle
 type node uint32
 type nodes []node
 
@@ -89,6 +91,8 @@ func (c *Circle) RemoveServer(s *Server) {
 func (c *Circle) Get(key string) *Server {
 	c.RLock()
 	defer c.RUnlock()
+
+	// search for the virtualnode, assosiated with the key
 	i := c.search(key)
 	if i >= len(c.nodes) {
 		i = 0
@@ -96,6 +100,8 @@ func (c *Circle) Get(key string) *Server {
 	return c.node2server[c.nodes[i]]
 }
 
+// adding server to the circle. Each server has number of vnodes represented as hashes
+// to generate several hashes from server addres, append byte for each iteration
 func (c *Circle) add(server *Server) {
 	if _, ok := c.servers[server]; !ok {
 		c.servers[server] = struct{}{}
@@ -103,13 +109,19 @@ func (c *Circle) add(server *Server) {
 		for i := 0; i < server.Weight; i++ {
 			vnodeHash := node(crc32.ChecksumIEEE(serverBytes))
 			c.nodes = append(c.nodes, vnodeHash)
+
+			// assosiate virtual node hash with the server
 			c.node2server[vnodeHash] = server
+
+			// update input to generate new hash
 			serverBytes = append(serverBytes, '_')
 		}
 	}
 }
 
 func (c *Circle) remove(s *Server) {
+
+	// removing last server from the circle means its nullifying
 	if len(c.servers) == 1 {
 		c.nodes = nodes{}
 		c.servers = make(map[*Server]struct{})
@@ -117,6 +129,7 @@ func (c *Circle) remove(s *Server) {
 		return
 	}
 
+	// delete vnodes assosiated with the server
 	for nodeIndex, nodeHash := range c.nodes {
 		if server := c.node2server[nodeHash]; *server == *s {
 			delete(c.node2server, nodeHash)
@@ -126,6 +139,7 @@ func (c *Circle) remove(s *Server) {
 	delete(c.servers, s)
 }
 
+// search for the key in the nodes. The node returned has hash value greater the key's hash
 func (c *Circle) search(key string) int {
 	searchfn := func(i int) bool {
 		return c.nodes[i] >= node(crc32.ChecksumIEEE([]byte(key)))

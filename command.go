@@ -239,6 +239,7 @@ func TTL(client *Client) {
 		return
 	}
 
+	// set absolute time for the expiration
 	if expire != 0 {
 		expire += time.Now().Unix()
 	}
