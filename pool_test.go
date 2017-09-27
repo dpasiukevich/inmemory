@@ -118,7 +118,7 @@ func TestPoolReturn(t *testing.T) {
 		value := []byte{}
 
 		// try to return more connections than the limit is
-		conn, err := net.Dial("tcp", serverAddr)
+		conn, _ = net.Dial("tcp", serverAddr)
 		pool.Return(serverAddr, conn)
 
 		_, err = conn.Read(value)
@@ -127,7 +127,7 @@ func TestPoolReturn(t *testing.T) {
 		}
 
 		// return connection to non-existing server
-		conn, err = net.Dial("tcp", serverAddr)
+		conn, _ = net.Dial("tcp", serverAddr)
 		ok = pool.Return(serverAddr+"0", conn)
 		if ok {
 			t.Error("Expected to have an error for returning connection to non-existent server")
@@ -135,8 +135,8 @@ func TestPoolReturn(t *testing.T) {
 	}()
 
 	for i := 0; i < 2; i++ {
-		_, err = ln.Accept()
-		if err != nil {
+		_, connErr := ln.Accept()
+		if connErr != nil {
 			t.Errorf("Expected to receive connection, got error: %#v", err)
 		}
 	}

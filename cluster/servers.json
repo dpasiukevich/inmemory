@@ -1,10 +1,14 @@
 [
     {
-       "addr":"127.0.0.1:3001",
+        "addr":"inmemory_server1:3000",
+        "weight":500
+    }, 
+    {
+       "addr":"inmemory_server2:3001",
        "weight":500
     },
     {
-       "addr":"127.0.0.1:3002",
+       "addr":"inmemory_server3:3002",
        "weight":250
     }
  ]

@@ -1,0 +1,8 @@
+FROM golang:1.9 
+
+RUN mkdir /inmemory
+ADD . /inmemory
+ADD . /go/src/github.com/pasiukevich/inmemory
+WORKDIR /inmemory/cluster
+RUN go get -u github.com/fsnotify/fsnotify
+RUN go build proxy.go 

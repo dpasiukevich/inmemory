@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -26,11 +25,9 @@ func main() {
 	certPtr := flag.String("cert", "server.crt", "Server certificate filepath.")
 	keyPtr := flag.String("key", "server.key", "Server key filepath.")
 
-	servers := readServers(serversPtr)
+	flag.Parse()
 
-	for _, s := range servers {
-		fmt.Println(s.Addr)
-	}
+	servers := readServers(serversPtr)
 
 	circle := inmemory.NewCircle()
 	circle.Adjust(servers...)
@@ -71,13 +68,6 @@ func main() {
 		go handleConnection(clientConn, pool, circle)
 	}
 }
-
-// func getServer(key string) string {
-// 	if len(key)%2 == 0 {
-// 		return servers[0]
-// 	}
-// 	return servers[1]
-// }
 
 func newConnection(server string) (net.Conn, error) {
 	tlsConfig := tls.Config{InsecureSkipVerify: true}
@@ -128,7 +118,7 @@ func handleConnection(clientConn net.Conn, pool *inmemory.Pool, circle *inmemory
 				serverrw.Flush()
 				result, err := serverrw.ReadString('\n')
 
-				fmt.Printf("got result: %s", string(result))
+				log.Printf("got result: %s", string(result))
 				if err != nil {
 					rw.WriteString(err.Error())
 				} else {
@@ -138,6 +128,9 @@ func handleConnection(clientConn net.Conn, pool *inmemory.Pool, circle *inmemory
 				rw.Flush()
 				pool.Return(server.Addr, serverConn)
 			}
+		} else {
+			rw.WriteString("request should have at least 2 words: command and key\n")
+			rw.Flush()
 		}
 	}
 }

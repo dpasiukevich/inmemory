@@ -1,7 +1,7 @@
-FROM golang:latest 
+FROM golang:1.9 
 
 RUN mkdir /inmemory
 ADD . /inmemory
-ADD . /go/src/github.com/dpasiukevich/inmemory
+ADD . /go/src/github.com/pasiukevich/inmemory
 WORKDIR /inmemory/server
 RUN go build server.go 

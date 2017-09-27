@@ -1,11 +1,43 @@
 version : '3.3'
 services:
-  inmemory:
-    build: .
-    command: /inmemory/server/server -addr=0.0.0.0:8443
+  inmemory_server1:
+    build:
+      context: .
+      dockerfile: Dockerfile-server
+    command: /inmemory/server/server -addr=0.0.0.0:3000
     ports:
-      - "8443:8443"
+      - "3000:3000"
     volumes:
-      - mycache_backups:/inmemory/server/.backups
+      - inmemory_server1:/inmemory/server/.backups
+  inmemory_server2:
+    build:
+      context: .
+      dockerfile: Dockerfile-server
+    command: /inmemory/server/server -addr=0.0.0.0:3001
+    ports:
+      - "3001:3001"
+    volumes:
+      - inmemory_server2:/inmemory/server/.backups
+  inmemory_server3:
+    build:
+      context: .
+      dockerfile: Dockerfile-server
+    command: /inmemory/server/server -addr=0.0.0.0:3002
+    ports:
+      - "3002:3002"
+    volumes:
+      - inmemory_server3:/inmemory/server/.backups
+  inmemory_cluster_proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile-proxy
+    command: /inmemory/cluster/proxy -addr=0.0.0.0:3050
+    ports:
+      - "3050:3050"
+    volumes:
+      - inmemory_cluster_proxy:/inmemory/cluster/.backups
 volumes:
-  mycache_backups:
+  inmemory_server1:
+  inmemory_server2:
+  inmemory_server3:
+  inmemory_cluster_proxy:

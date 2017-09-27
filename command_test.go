@@ -247,7 +247,7 @@ func TestLSet(t *testing.T) {
 
 	client.Exec("LSET", []string{"doesntexist", "0", "14"})
 	if client.err != errNoItem {
-		t.Errorf("Set key non-existant list should give %#v, got: %#v", errNoItem, client.err)
+		t.Errorf("Set key non-existent list should give %#v, got: %#v", errNoItem, client.err)
 	}
 }
 
