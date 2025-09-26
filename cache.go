@@ -66,6 +66,8 @@ type Item struct {
 	el    *list.Element
 }
 
+type TestStruct struct{}
+
 // DataStore struct holds all values for this database with LRU caching
 // RWMutex is required for the thread-safe data reading and modification.
 type DataStore struct {
